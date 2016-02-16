@@ -1,8 +1,12 @@
 #include <iostream>
 #include <stdlib.h>
+#include <chrono>
+#include <thread>
+#include <pthread.h>
+#include <unistd.h>
 
-const int height = 16;
-const int width = 100;
+const int height = 100;
+const int width = 200;
 
 
 int countNeighbours( int i, int j, bool board[][height])
@@ -67,14 +71,23 @@ int runLifeChecks(bool board[][height]){
 }
 
 int draw(bool board[][height]){
-	for (int j=0; j<height;++j){
-		for (int i=0; i<width; ++i)
-			if (board[i][j] == true  )
-				std::cout << "X" << " ";
-			else
-				std::cout << " " << " ";
-		std::cout << "\n";
+	//std::cout << "\033[2J\033[1;1H";
+	char screen[height*(2*width+1)];
+        for (int j=0; j<height; ++j){
+		for (int i=0; i<width; i+=2){
+			if (board[i][j] == true){
+				screen[j*(width+1)+i] = '[';
+				screen[j*(width+1)+i+1] = ']';
+			}
+			else {
+				screen[j*(width+1)+i] = ' ';
+				screen[j*(width+1)+i+1] = ' ';
+			}
+		}
+		screen[(j+1)*(width+1)-1] = '\n';
 	}
+	screen[height*(width+1)+1] = '\0';
+	std::cout << screen;
 	return 0;
 }
 bool randomBool() {
@@ -83,9 +96,14 @@ bool randomBool() {
 
 
 int main(){
+   	using namespace std::literals; 
 	int seed;
+	int step;
 	std::cout << "enter a seed number";
 	std::cin >> seed;
+	std::cout << "enter a time step";
+        std::cin >> step;
+	std::chrono::milliseconds step_duration (step);
 	srand(seed);
 
 	bool board[width][height] = {};
@@ -99,13 +117,12 @@ int main(){
 		}
 		std::cout << std::endl;
 	}
-	draw(board);
+	//draw(board);
 	std::cout <<std::endl;
 	while (true){
-		std::cout << "----------------" << std::endl;
+		std::cout << "\033[2J\033[1;1H";
 		runLifeChecks(board);
 		draw(board);
-
-		std::cin.ignore();
+		std::this_thread::sleep_for(step_duration);
 	}
 }
